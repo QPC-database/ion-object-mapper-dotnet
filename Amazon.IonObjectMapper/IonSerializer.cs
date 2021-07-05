@@ -10,28 +10,78 @@ using static Amazon.IonObjectMapper.IonSerializationFormat;
 
 namespace Amazon.IonObjectMapper
 {
+    /// <summary>
+    /// Interface for Ion Serializer.
+    /// </summary>
     public interface IIonSerializer
     {
+        /// <summary>
+        /// Serialize value.
+        /// </summary>
+        ///
+        /// <param name="writer">The Ion writer used during serialization.</param>
+        /// <param name="item">The value to serialize.</param>
         void Serialize(IIonWriter writer, object item);
+        
+        /// <summary>
+        /// Deserialize value.
+        /// </summary>
+        ///
+        /// <param name="reader">The Ion reader used during deserialization.</param>
+        ///
+        /// <returns>The deserialized value.</returns>
         object Deserialize(IIonReader reader);
     }
 
+    /// <summary>
+    /// Generic abstract class for a type T Ion Serializer.
+    /// </summary>
     public abstract class IonSerializer<T> : IIonSerializer
     {
+        /// <summary>
+        /// Serialize value of type T.
+        /// </summary>
+        ///
+        /// <param name="writer">The Ion writer used during serialization.</param>
+        /// <param name="item">The value of type T to serialize.</param>
         public abstract void Serialize(IIonWriter writer, T item);
+        
+        /// <summary>
+        /// Deserialize value of type T.
+        /// </summary>
+        ///
+        /// <param name="reader">The Ion reader used during deserialization.</param>
+        ///
+        /// <returns>The deserialized value of type T.</returns>
         public abstract T Deserialize(IIonReader reader);
 
+        /// <summary>
+        /// Convert value to type T and serialize the result.
+        /// </summary>
+        ///
+        /// <param name="writer">The Ion writer used during serialization.</param>
+        /// <param name="item">The value to serialize as type T.</param>
         void IIonSerializer.Serialize(IIonWriter writer, object item)
         {
             Serialize(writer, (T)item);
         }
 
+        /// <summary>
+        /// Deserialize value.
+        /// </summary>
+        ///
+        /// <param name="reader">The Ion reader used during deserialization.</param>
+        ///
+        /// <returns>The deserialized value.</returns>
         object IIonSerializer.Deserialize(IIonReader reader)
         {
             return Deserialize(reader);
         }
     }
 
+    /// <summary>
+    /// Format for serializing Ion.
+    /// </summary>
     public enum IonSerializationFormat 
     {
         BINARY,
@@ -39,37 +89,69 @@ namespace Amazon.IonObjectMapper
         PRETTY_TEXT
     }
 
+    /// <summary>
+    /// Interface for Ion Reader Factory.
+    /// </summary>
     public interface IonReaderFactory
     {
+        /// <summary>
+        /// Create an Ion Reader.
+        /// </summary>
         IIonReader Create(Stream stream);
     }
 
+    /// <summary>
+    /// Default Ion Reader Factory.
+    /// </summary>
     public class DefaultIonReaderFactory : IonReaderFactory
     {
+        /// <summary>
+        /// Create an Ion Reader with the option to detect the format of the stream.
+        /// </summary>
         public IIonReader Create(Stream stream)
         {
             return IonReaderBuilder.Build(stream, new ReaderOptions {Format = ReaderFormat.Detect});
         }
     }
     
+    /// <summary>
+    /// Interface for Ion Writer Factory.
+    /// </summary>
     public interface IonWriterFactory
     {
+        /// <summary>
+        /// Create an Ion Writer.
+        /// </summary>
         IIonWriter Create(Stream stream);
     }
 
+    /// <summary>
+    /// Default Ion Writer Factory.
+    /// </summary>
     public class DefaultIonWriterFactory : IonWriterFactory
     {
         private IonSerializationFormat format = TEXT;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DefaultIonWriterFactory"/> class.
+        /// </summary>
         public DefaultIonWriterFactory()
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DefaultIonWriterFactory"/> class.
+        /// </summary>
+        ///
+        /// <param name="format">Serialization format.</param>
         public DefaultIonWriterFactory(IonSerializationFormat format)
         {
             this.format = format;
         }
 
+        /// <summary>
+        /// Create an Ion Writer depending on the serialization format.
+        /// </summary>
         public IIonWriter Create(Stream stream)
         {
             switch (format)
@@ -87,13 +169,25 @@ namespace Amazon.IonObjectMapper
         }
     }
 
+    /// <summary>
+    /// Interface for Object Factory.
+    /// </summary>
     public interface ObjectFactory
     {
+        /// <summary>
+        /// Create new instance of an object.
+        /// </summary>
         object Create(IonSerializationOptions options, IIonReader reader, Type targetType);
     }
 
+    /// <summary>
+    /// Default Object Factory.
+    /// </summary>
     public class DefaultObjectFactory : ObjectFactory
     {
+        /// <summary>
+        /// Create new instance of an object.
+        /// </summary>
         public object Create(IonSerializationOptions options, IIonReader reader, Type targetType)
         {
             var annotations = reader.GetTypeAnnotations();
@@ -138,37 +232,121 @@ namespace Amazon.IonObjectMapper
         }
     }
 
+    /// <summary>
+    /// Serialization options.
+    /// </summary>
     public class IonSerializationOptions
     {
+        /// <summary>
+        /// Option to specify the .NET property naming convention.
+        /// </summary>
         public IonPropertyNamingConvention NamingConvention { get; init; } = new CamelCaseNamingConvention();
+        
+        /// <summary>
+        /// Option to specify the serialization format.
+        /// </summary>
         public IonSerializationFormat Format { get; init; } = TEXT;
+        
+        /// <summary>
+        /// Option to specify the maximum deserialization depth.
+        /// </summary>
         public int MaxDepth { get; init; } = 64;
+        
+        /// <summary>
+        /// Option to annotate Guids.
+        /// </summary>
         public bool AnnotateGuids { get; init; } = false;
 
+        /// <summary>
+        /// Option to specify whether or not all .NET fields should be included
+        /// during serialization and/or deserialization.
+        /// </summary>
         public bool IncludeFields { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify whether or not null values should be serialized and/or deserialized.
+        /// </summary>
         public bool IgnoreNulls { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify whether or not readonly fields should be serialized and/or deserialized.
+        /// </summary>
         public bool IgnoreReadOnlyFields { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify whether or not readonly properties should be serialized and/or deserialized.
+        /// </summary>
         public bool IgnoreReadOnlyProperties { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify whether or not property names should be treated as case insensitive.
+        /// </summary>
         public bool PropertyNameCaseInsensitive { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify whether or not default values should be serialized and/or deserialized.
+        /// </summary>
         public bool IgnoreDefaults { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify whether or not to include type information on all non-primitive fields.
+        /// </summary>
         public bool IncludeTypeInformation { get; init; } = false;
+        
+        /// <summary>
+        /// Option to specify the type annotation prefix.
+        /// </summary>
         public TypeAnnotationPrefix TypeAnnotationPrefix { get; init; } = new NamespaceTypeAnnotationPrefix();
 
+        /// <summary>
+        /// Option to specify the type annotation .NET class name.
+        /// </summary>
         public TypeAnnotationName TypeAnnotationName { get; init; } = new ClassNameTypeAnnotationName();
 
+        /// <summary>
+        /// Option to specify the mapping between the .NET type name and the Ion annotation.
+        /// </summary>
         public AnnotationConvention AnnotationConvention { get; init; } = new DefaultAnnotationConvention();
 
+        /// <summary>
+        /// Option to specify how a type is annotated during serialization.
+        /// </summary>
         public TypeAnnotator TypeAnnotator { get; init; } = new DefaultTypeAnnotator();
 
+        /// <summary>
+        /// Option to specify how Ion Readers should be built.
+        /// </summary>
         public IonReaderFactory ReaderFactory { get; init; } = new DefaultIonReaderFactory();
+        
+        /// <summary>
+        /// Option to specify how Ion Writers should be built.
+        /// </summary>
         public IonWriterFactory WriterFactory { get; init; } = new DefaultIonWriterFactory();
 
+        /// <summary>
+        /// Option to specify how objects should be built during deserialization.
+        /// </summary>
         public ObjectFactory ObjectFactory { get; init; } = new DefaultObjectFactory();
+        
+        /// <summary>
+        /// Option to specify the list of assembly names to search when creating types from annotations.
+        /// </summary>
         public IEnumerable<string> AnnotatedTypeAssemblies { get; init; }
 
+        /// <summary>
+        /// Option to specify whether or not the serializer will ignore as many errors as possible.
+        /// </summary>
         public readonly bool PermissiveMode;
         
+        /// <summary>
+        /// Option to specify custom serializers for any given type.
+        /// </summary>
         public Dictionary<Type, IIonSerializer> IonSerializers { get; init; }
+        
+        /// <summary>
+        /// Option to specify a custom context object to be used by custom serializers
+        /// to further customize behavior.
+        /// </summary>
         public Dictionary<string, object> CustomContext { get; init; }
     }
 
@@ -181,6 +359,7 @@ namespace Amazon.IonObjectMapper
         /// <summary>
         /// Create custom IonSerializer with customContext option.
         /// </summary>
+        /// 
         /// <param name="options">
         /// The IonSerializationOptions is an object that can be passed to the IonSerializer object
         /// and determined the way to customize the IonSerializer.
@@ -190,6 +369,7 @@ namespace Amazon.IonObjectMapper
         /// A Dictionary of Key Type string is to map to any customized objects
         /// and Value Type object is to custom any serialize/deserialize logic.
         /// </param>
+        /// 
         /// <returns>
         /// Customized IonSerializer.
         /// </returns>
@@ -204,6 +384,7 @@ namespace Amazon.IonObjectMapper
         /// <summary>
         /// Create custom IonSerializer with customContext option.
         /// </summary>
+        /// 
         /// <param name="options">
         /// The IonSerializationOptions is an object that can be passed to the IonSerializer object
         /// and determined the way to customize the IonSerializer.
@@ -213,6 +394,7 @@ namespace Amazon.IonObjectMapper
         /// A Dictionary of Key Type string is to map to any customized objects
         /// and Value Type object is to custom any serialize/deserialize logic.
         /// </param>
+        /// 
         /// <returns>
         /// Customized IonSerializer.
         /// </returns>
@@ -224,20 +406,38 @@ namespace Amazon.IonObjectMapper
         }
     }
 
+    /// <summary>
+    /// Ion Serializer.
+    /// </summary>
     public class IonSerializer
     {
         private readonly IonSerializationOptions options;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IonSerializer"/> class.
+        /// </summary>
         public IonSerializer() : this(new IonSerializationOptions())
         {
 
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IonSerializer"/> class.
+        /// </summary>
+        ///
+        /// <param name="options">Serialization options.</param>
         public IonSerializer(IonSerializationOptions options)
         {
             this.options = options;
         }
 
+        /// <summary>
+        /// Serialize value of type T to Ion.
+        /// </summary>
+        ///
+        /// <param name="item">Value of type T to be serialized.</param>
+        ///
+        /// <returns>The serialized stream.</returns>
         public Stream Serialize<T>(T item)
         {
             var stream = new MemoryStream();
@@ -246,6 +446,12 @@ namespace Amazon.IonObjectMapper
             return stream;
         }
 
+        /// <summary>
+        /// Serialize value of type T to Ion.
+        /// </summary>
+        ///
+        /// <param name="stream">The stream to be written with serialized Ion.</param>
+        /// <param name="item"> Value of type T to be serialized.</param>
         public void Serialize<T>(Stream stream, T item)
         {
             IIonWriter writer = options.WriterFactory.Create(stream);
@@ -254,6 +460,12 @@ namespace Amazon.IonObjectMapper
             writer.Flush();
         }
 
+        /// <summary>
+        /// Serialize value of type T to Ion.
+        /// </summary>
+        ///
+        /// <param name="writer">The Ion writer used for serialization.</param>
+        /// <param name="item">Value of type T to be serialized.</param>
         public void Serialize<T>(IIonWriter writer, T item)
         {
             if (item == null)
@@ -403,17 +615,40 @@ namespace Amazon.IonObjectMapper
             throw new NotSupportedException("Encountered an Ion list but the desired deserialized type was not an IList, it was: " + listType);
         }
 
-
+        /// <summary>
+        /// Deserialize value of type T from Ion.
+        /// </summary>
+        ///
+        /// <param name="stream">The Ion stream to be read during deserialization.</param>
+        ///
+        /// <returns>The deserialized value of type T.</returns>
         public T Deserialize<T>(Stream stream)
         {
             return Deserialize<T>(options.ReaderFactory.Create(stream));
         }
 
+        /// <summary>
+        /// Deserialize value from Ion.
+        /// </summary>
+        ///
+        /// <param name="reader">The Ion reader used during deserialization.</param>
+        /// <param name="type">The target .NET type for deserialization.</param>
+        ///
+        /// <returns>The deserialized value.</returns>
         public object Deserialize(IIonReader reader, Type type)
         {
             return Deserialize(reader, type, reader.MoveNext());
         }
 
+        /// <summary>
+        /// Deserialize value from Ion.
+        /// </summary>
+        ///
+        /// <param name="reader">The Ion reader used during deserialization.</param>
+        /// <param name="type">The target .NET type for deserialization.</param>
+        /// <param name="ionType">The Ion type of the current Ion field.</param>
+        ///
+        /// <returns>The deserialized value.</returns>
         public object Deserialize(IIonReader reader, Type type, IonType ionType)
         {
             if (reader.CurrentDepth > this.options.MaxDepth)
@@ -549,6 +784,13 @@ namespace Amazon.IonObjectMapper
             throw new NotSupportedException($"Data with Ion type {ionType} is not supported for deserialization");
         }
 
+        /// <summary>
+        /// Deserialize value of type T from Ion.
+        /// </summary>
+        ///
+        /// <param name="reader">The Ion reader used during deserialization.</param>
+        ///
+        /// <returns>The deserialized value of type T.</returns>
         public T Deserialize<T>(IIonReader reader)
         {
             return (T) Deserialize(reader, typeof(T));
